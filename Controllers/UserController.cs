@@ -22,7 +22,7 @@ namespace Assignment3.Controllers
         // GET: User
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Users.ToListAsync());
+            return Json(await _context.Users.ToListAsync());
         }
 
         // GET: User/Details/5
@@ -40,53 +40,53 @@ namespace Assignment3.Controllers
                 return NotFound();
             }
 
-            return View(user);
+            return Json(user);
         }
 
         // GET: User/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
+        // public IActionResult Create()
+        // {
+        //     return View();
+        // }
 
         // POST: User/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Email,Password,Username,PurchaseHistory,ShippingAddress")] User user)
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([FromBody] User user)
         {
             if (ModelState.IsValid)
             {
                 _context.Add(user);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return Ok(new {message = "User added successfully.", user});
             }
             return View(user);
         }
 
         // GET: User/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        // public async Task<IActionResult> Edit(int? id)
+        // {
+        //     if (id == null)
+        //     {
+        //         return NotFound();
+        //     }
 
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return View(user);
-        }
+        //     var user = await _context.Users.FindAsync(id);
+        //     if (user == null)
+        //     {
+        //         return NotFound();
+        //     }
+        //     return View(user);
+        // }
 
         // POST: User/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int? id, [Bind("Id,Email,Password,Username,PurchaseHistory,ShippingAddress")] User user)
+        [HttpPut]
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int? id, [FromBody] User user)
         {
             if (id != user.Id)
             {
@@ -111,32 +111,32 @@ namespace Assignment3.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return Ok(new {message = "User edited successfully.", user});
             }
             return View(user);
         }
 
         // GET: User/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        // public async Task<IActionResult> Delete(int? id)
+        // {
+        //     if (id == null)
+        //     {
+        //         return NotFound();
+        //     }
 
-            var user = await _context.Users
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (user == null)
-            {
-                return NotFound();
-            }
+        //     var user = await _context.Users
+        //         .FirstOrDefaultAsync(m => m.Id == id);
+        //     if (user == null)
+        //     {
+        //         return NotFound();
+        //     }
 
-            return View(user);
-        }
+        //     return View(user);
+        // }
 
         // POST: User/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
+        [HttpDelete, ActionName("Delete")]
+        //[ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int? id)
         {
             var user = await _context.Users.FindAsync(id);
@@ -146,7 +146,7 @@ namespace Assignment3.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Ok(new {message = "User deleted successfully.",id});
         }
 
         private bool UserExists(int? id)

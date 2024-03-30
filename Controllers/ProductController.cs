@@ -20,12 +20,15 @@ namespace Assignment3.Controllers
         }
 
         // GET: Product
+        //get all products
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Products.ToListAsync());
+            var products = await _context.Products.ToListAsync();
+            return Json(products);
         }
 
         // GET: Product/Details/5
+        //get single product
         public async Task<IActionResult> Details(string id)
         {
             if (id == null)
@@ -40,43 +43,29 @@ namespace Assignment3.Controllers
                 return NotFound();
             }
 
-            return View(product);
+            return Json(product);
         }
 
         // GET: Product/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
+        // public IActionResult Create()
+        // {
+        //     return View();
+        // }
 
         // POST: Product/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+
+        //Create new product
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Description,Image,Pricing,ShippingCost")] Product product)
+        // [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([FromBody] Product product)
         {
             if (ModelState.IsValid)
             {
                 _context.Add(product);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(product);
-        }
-
-        // GET: Product/Edit/5
-        public async Task<IActionResult> Edit(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
-            {
-                return NotFound();
+                return Ok(new {message = "Product added successfully.", product});
             }
             return View(product);
         }
@@ -84,9 +73,11 @@ namespace Assignment3.Controllers
         // POST: Product/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("Id,Description,Image,Pricing,ShippingCost")] Product product)
+
+        //edit product
+        [HttpPut]
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(string id, [FromBody] Product product)
         {
             if (id != product.Id)
             {
@@ -111,32 +102,32 @@ namespace Assignment3.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return Ok(new {message = "Product edited successfully.", product});
             }
             return View(product);
         }
 
         // GET: Product/Delete/5
-        public async Task<IActionResult> Delete(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        // public async Task<IActionResult> Delete(string id)
+        // {
+        //     if (id == null)
+        //     {
+        //         return NotFound();
+        //     }
 
-            var product = await _context.Products
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (product == null)
-            {
-                return NotFound();
-            }
+        //     var product = await _context.Products
+        //         .FirstOrDefaultAsync(m => m.Id == id);
+        //     if (product == null)
+        //     {
+        //         return NotFound();
+        //     }
 
-            return View(product);
-        }
+        //     return View(product);
+        // }
 
         // POST: Product/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
+        [HttpDelete, ActionName("Delete")]
+        // [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(string id)
         {
             var product = await _context.Products.FindAsync(id);
@@ -146,7 +137,7 @@ namespace Assignment3.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Ok(new {message = "Product deleted successfully.",id});
         }
 
         private bool ProductExists(string id)

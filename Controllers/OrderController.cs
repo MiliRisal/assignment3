@@ -22,8 +22,8 @@ namespace Assignment3.Controllers
         // GET: Order
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Orders.Include(o => o.User);
-            return View(await applicationDbContext.ToListAsync());
+            var order = _context.Orders.Include(o => o.User);
+            return Json(order);
         }
 
         // GET: Order/Details/5
@@ -42,56 +42,56 @@ namespace Assignment3.Controllers
                 return NotFound();
             }
 
-            return View(order);
+            return Json(order);
         }
 
         // GET: Order/Create
-        public IActionResult Create()
-        {
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id");
-            return View();
-        }
+        // public IActionResult Create()
+        // {
+        //     ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id");
+        //     return View();
+        // }
 
         // POST: Order/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,UserId,OrderDate")] Order order)
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([FromBody] Order order)
         {
             if (ModelState.IsValid)
             {
                 _context.Add(order);
                 await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return Ok(new {message = "Order made successfully.", order});
             }
             ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", order.UserId);
             return View(order);
         }
 
         // GET: Order/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        // public async Task<IActionResult> Edit(int? id)
+        // {
+        //     if (id == null)
+        //     {
+        //         return NotFound();
+        //     }
 
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", order.UserId);
-            return View(order);
-        }
+        //     var order = await _context.Orders.FindAsync(id);
+        //     if (order == null)
+        //     {
+        //         return NotFound();
+        //     }
+        //     ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", order.UserId);
+        //     return View(order);
+        // }
 
         // POST: Order/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int? id, [Bind("Id,UserId,OrderDate")] Order order)
+        [HttpPut]
+        //[ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int? id, [FromBody] Order order)
         {
             if (id != order.Id)
             {
@@ -116,34 +116,34 @@ namespace Assignment3.Controllers
                         throw;
                     }
                 }
-                return RedirectToAction(nameof(Index));
+                return Ok(new {message = "Order edited successfully.", order});
             }
             ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", order.UserId);
             return View(order);
         }
 
         // GET: Order/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        // public async Task<IActionResult> Delete(int? id)
+        // {
+        //     if (id == null)
+        //     {
+        //         return NotFound();
+        //     }
 
-            var order = await _context.Orders
-                .Include(o => o.User)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (order == null)
-            {
-                return NotFound();
-            }
+        //     var order = await _context.Orders
+        //         .Include(o => o.User)
+        //         .FirstOrDefaultAsync(m => m.Id == id);
+        //     if (order == null)
+        //     {
+        //         return NotFound();
+        //     }
 
-            return View(order);
-        }
+        //     return View(order);
+        // }
 
         // POST: Order/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
+        [HttpDelete, ActionName("Delete")]
+        //[ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int? id)
         {
             var order = await _context.Orders.FindAsync(id);
@@ -153,7 +153,7 @@ namespace Assignment3.Controllers
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Ok(new {message = "Order deleted successfully.",id});
         }
 
         private bool OrderExists(int? id)
