@@ -10,7 +10,9 @@ using Assignment3.Models;
 
 namespace Assignment3.Controllers
 {
-    public class CommentsController : Controller
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CommentsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
 
@@ -19,95 +21,85 @@ namespace Assignment3.Controllers
             _context = context;
         }
 
-        // GET: Comments
-        public async Task<IActionResult> Index()
+        // GET: api/Comments
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Comments>>> GetComments()
         {
-            var comments = _context.Comments.Include(c => c.User);
-            return Json(comments);
-        }
-
-        // GET: Comments/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var comments = await _context.Comments
-                .Include(c => c.User)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (comments == null)
+                                         .Include(c => c.User)
+                                         .Include(c => c.Product)
+                                         .ToListAsync();
+            return Ok(comments);
+        }
+
+        // GET: api/Comments/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Comments>> GetComment(int id)
+        {
+            var comment = await _context.Comments.Include(c => c.User)
+                                                .Include(c => c.Product).FirstOrDefaultAsync(m => m.Id == id);
+
+            if (comment == null)
             {
                 return NotFound();
             }
 
-            return Json(comments);
+            return Ok(comment);
         }
 
-        // GET: Comments/Create
-        // public IActionResult Create()
-        // {
-        //     ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id");
-        //     return View();
-        // }
-
-        // POST: Comments/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([FromBody] Comments comments)
+        public async Task<ActionResult<Comments>> CreateComment([FromBody] Comments comments)
         {
+            // Check if the provided ProductId exists in the database
+            var existingProduct = await _context.Products.FindAsync(comments?.Product?.Id);
+            if (existingProduct == null)
+            {
+                ModelState.AddModelError("Product", "The specified product does not exist.");
+                return BadRequest(ModelState);
+            }
+
+            // Check if the provided UserId exists in the database
+            var existingUser = await _context.Users.FindAsync(comments?.UserId);
+            if (existingUser == null)
+            {
+                ModelState.AddModelError("UserId", "The specified user does not exist.");
+                return BadRequest(ModelState);
+            }
+
             if (ModelState.IsValid)
             {
-                _context.Add(comments);
+                // Set the navigation properties
+                comments.Product = existingProduct;
+                comments.User = existingUser;
+
+                _context.Comments.Add(comments);
                 await _context.SaveChangesAsync();
-                return Ok(new {message = "Comments added successfully.", comments});
+                return CreatedAtAction("GetComment", new { id = comments.Id }, comments);
             }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", comments.UserId);
-            return View(comments);
+
+            return BadRequest(ModelState);
         }
 
-        // GET: Comments/Edit/5
-        // public async Task<IActionResult> Edit(int? id)
-        // {
-        //     if (id == null)
-        //     {
-        //         return NotFound();
-        //     }
 
-        //     var comments = await _context.Comments.FindAsync(id);
-        //     if (comments == null)
-        //     {
-        //         return NotFound();
-        //     }
-        //     ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", comments.UserId);
-        //     return View(comments);
-        // }
-
-        // POST: Comments/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPut]
-        //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int? id, [FromBody] Comments comments)
+        // PUT: api/Comments/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditComment(int id, [FromBody] Comments comments)
         {
             if (id != comments.Id)
             {
-                return NotFound();
+                return BadRequest();
             }
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    _context.Update(comments);
+                    _context.Entry(comments).State = EntityState.Modified;
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CommentsExists(comments.Id))
+                    if (!CommentsExists(id))
                     {
                         return NotFound();
                     }
@@ -116,47 +108,30 @@ namespace Assignment3.Controllers
                         throw;
                     }
                 }
-                return Ok(new {message = "Product edited successfully.", comments});
+
+                return Ok(new { message = "Comment updated successfully.", comments });
             }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", comments.UserId);
-            return View(comments);
+
+            return BadRequest(ModelState);
         }
 
-        // GET: Comments/Delete/5
-        // public async Task<IActionResult> Delete(int? id)
-        // {
-        //     if (id == null)
-        //     {
-        //         return NotFound();
-        //     }
-
-        //     var comments = await _context.Comments
-        //         .Include(c => c.User)
-        //         .FirstOrDefaultAsync(m => m.Id == id);
-        //     if (comments == null)
-        //     {
-        //         return NotFound();
-        //     }
-
-        //     return View(comments);
-        // }
-
-        // POST: Comments/Delete/5
-        [HttpDelete, ActionName("Delete")]
-        //[ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int? id)
+        // DELETE: api/Comments/5
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Comments>> DeleteComment(int id)
         {
-            var comments = await _context.Comments.FindAsync(id);
-            if (comments != null)
+            var comment = await _context.Comments.FindAsync(id);
+            if (comment == null)
             {
-                _context.Comments.Remove(comments);
+                return NotFound();
             }
 
+            _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();
-            return Ok(new {message = "Comments deleted successfully.",id});
+
+            return Ok(new { message = "Comment deleted successfully.", id });
         }
 
-        private bool CommentsExists(int? id)
+        private bool CommentsExists(int id)
         {
             return _context.Comments.Any(e => e.Id == id);
         }
